@@ -508,16 +508,40 @@ impl BerryLockfile {
     }
 
     fn locator_for_workspace_path(&self, workspace_path: &str) -> Option<&Locator<'_>> {
-        self.workspace_path_to_locator
-            .get(workspace_path)
-            .or_else(|| {
-                // This is an inefficient fallback we use in case our old logic was catching
-                // edge cases that the eager approach misses.
-                self.locator_package.keys().find(|locator| {
-                    locator.reference.starts_with("workspace:")
-                        && locator.reference.ends_with(workspace_path)
-                })
-            })
+        if let Some(locator) = self.workspace_path_to_locator.get(workspace_path) {
+            return Some(locator);
+        }
+
+        // This is an inefficient fallback we use in case our old logic was catching
+        // edge cases that the eager approach misses. To avoid repeatedly scanning all
+        // locators for the same workspace path, we cache successful lookups.
+        //
+        // Note: We only cache positive results; if no locator is found we fall back to
+        // returning None without caching, preserving existing behavior.
+        if let Some(locator) = self.workspace_path_fallback_cache.get(workspace_path) {
+            return Some(locator);
+        }
+
+        let found = self
+            .locator_package
+            .keys()
+            .find(|locator| {
+                locator.reference.starts_with("workspace:")
+                    && locator.reference.ends_with(workspace_path)
+            });
+
+        if let Some(locator) = found {
+            // Safety: we store an owned clone of the locator in the cache so we can
+            // return a stable reference on subsequent lookups.
+            let owned = locator.clone().into_owned();
+            // We ignore errors on insert; if insertion fails, behavior remains as before.
+            self.workspace_path_fallback_cache
+                .insert(workspace_path.to_string(), owned);
+            // Return the original locator reference for this call.
+            Some(locator)
+        } else {
+            None
+        }
     }
 }
 
