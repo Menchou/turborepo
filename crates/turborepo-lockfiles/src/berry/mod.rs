@@ -568,7 +568,8 @@ impl Lockfile for BerryLockfile {
 
         let mut map = HashMap::new();
         for (name, version) in package.dependencies.iter().flatten() {
-            let mut dependency = Descriptor::new(name, version.as_ref()).unwrap();
+            let mut dependency =
+                Descriptor::new(name, version.as_ref()).map_err(Error::from)?;
             for (resolution, reference) in &self.overrides {
                 if let Some(override_dependency) =
                     resolution.reduce_dependency(reference, &dependency, &locator)
