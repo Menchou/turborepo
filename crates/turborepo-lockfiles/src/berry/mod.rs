@@ -381,7 +381,7 @@ impl BerryLockfile {
         // logically need Y.
         {
             // Collect all dependency names from packages in the pruned closure
-            let mut dep_names_in_closure: HashSet<String> = HashSet::new();
+            let mut dep_names_in_closure = HashSet::new();
             for key in packages {
                 if let Ok(pkg_locator) = Locator::try_from(key.as_str())
                     && let Some(pkg) = self.locator_package.get(&pkg_locator)
