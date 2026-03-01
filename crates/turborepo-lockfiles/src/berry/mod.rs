@@ -4,6 +4,8 @@ mod protocol_resolver;
 mod resolution;
 mod ser;
 
+const BERRY_LOCKFILE_VERSION_6: &str = "6";
+
 use std::{
     any::Any,
     collections::{HashMap, HashSet},
@@ -255,7 +257,7 @@ impl BerryLockfile {
         // Yarn v6 (Berry 3.x) strips cacheKey when a pruned subgraph contains
         // only workspace packages (no checksums). Yarn v8 (Berry 4.x) always
         // keeps it. Match each version's behavior so frozen installs pass.
-        if metadata.version == "6" {
+        if metadata.version == BERRY_LOCKFILE_VERSION_6 {
             let has_checksum = packages.values().any(|pkg| pkg.checksum.is_some());
             if !has_checksum {
                 metadata.cache_key = None;
