@@ -348,7 +348,12 @@ impl BerryLockfile {
         for patch in patches.values() {
             let patch_descriptors = reverse_lookup
                 .get(patch)
-                .unwrap_or_else(|| panic!("Unable to find {patch} in reverse lookup"));
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Internal error: patch locator {patch} not found in reverse lookup \
+                         while constructing the pruned lockfile subgraph"
+                    )
+                });
 
             // For each patch descriptor we extract the primary descriptor that each patch
             // descriptor targets and check if that descriptor is present in the
